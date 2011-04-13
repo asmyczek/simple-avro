@@ -25,13 +25,13 @@ Clojure wrapper around Avro schema and serialization.
 
 _simple-avro_ implements all types defined in [Avro schema specification](http://avro.apache.org/docs/1.5.0/spec.html).
 Just prepend _avro-_ to the type name or use plain string names. _defavro-_ macros defined for all named types
-(_defavro-record_, _defavro_enum_ and _defavro-fixed) create var objects convenient for hierarchical schema composition.
-Parameters namespace, aliases and doc can by provided in an optional argument map.
-Use string names for type references to define recursive types, for example:
+(_defavro-record_, _defavro-enum_ and _defavro-fixed_) create var objects convenient for hierarchical schema compositions.
+Parameters _namespace_, _aliases_ and _doc_ can by provided in an optional argument map. In recursive type definitions use 
+string names for type references, for example:
 
     (defavro-record IntList
-      "value" avro-int 
-      "next"  (avro-union "IntList" avro-null))
+      :value avro-int 
+      :next  (avro-union "IntList" avro-null))
 
 ### Data serialization
 
