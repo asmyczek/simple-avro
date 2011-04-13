@@ -44,5 +44,19 @@ Use equivalent decoder to de-serialize objects using _unpack_.
 
 For more details, see examples and unit tests.
 
+## Installation
+
+### Leiningen
+
+    [simple-avro/simple-avro "0.0.2"]
+ 
+### Maven
+
+    <dependency>
+      <groupId>simple-avro</groupId>
+      <artifactId>simple-avro</artifactId>
+      <version>0.0.2</version>
+    </dependency>
+
 Found a bug? Have a question? Drop me an email at adam.smyczek \_at\_ gmail.com.
 
