@@ -9,7 +9,10 @@
                                     GenericData$Record
                                     GenericDatumWriter
                                     GenericDatumReader)
-           (org.apache.avro.io EncoderFactory DecoderFactory)
+           (org.apache.avro.io JsonEncoder
+                               BinaryEncoder
+                               JsonDecoder
+                               DecoderFactory)
            (org.apache.avro.util Utf8)))
 
 
@@ -41,11 +44,12 @@
    Schema$Type/STRING   (fn [#^Schema schema obj] (if (string? obj)
                                            (Utf8. (str obj))
                                            (throw (Exception. (str "'" obj "' is not a string.")))))
-   Schema$Type/FIXED    (fn [#^Schema schema obj] (GenericData$Fixed. schema obj))
+   Schema$Type/FIXED    (fn [#^Schema schema obj] (doto (GenericData$Fixed. schema)
+                                                    (.bytes obj)))
 
    Schema$Type/ENUM     (fn [#^Schema schema obj] 
                           (if-let [enum (some #{obj} (.getEnumSymbols schema))]
-                            (GenericData$EnumSymbol. schema enum)
+                            (GenericData$EnumSymbol. enum)
                             (throw-with-log "Enum does not define '" obj "'.")))
 
    Schema$Type/UNION    (fn [#^Schema schema obj] 
@@ -105,7 +109,7 @@
   (fn [#^Schema schema obj]
     (encode-to schema obj
       (fn [#^Schema schema #^ByteArrayOutputStream stream]
-        (.jsonEncoder (EncoderFactory/get) schema stream))
+        (JsonEncoder. schema stream))
       (fn [#^ByteArrayOutputStream stream]
         (.. stream toString)))))
 
@@ -113,7 +117,7 @@
   (fn [#^Schema schema obj]
     (encode-to schema obj
       (fn [#^Schema schema #^ByteArrayOutputStream stream]
-        (.binaryEncoder (EncoderFactory/get) stream nil))
+        (BinaryEncoder. stream))
       (fn [#^ByteArrayOutputStream stream]
         (.. stream toString getBytes)))))
 
@@ -190,13 +194,13 @@
   (fn [#^Schema schema obj]
     (decode-from schema obj
       (fn [#^Schema schema #^String obj]
-        (.jsonDecoder (DecoderFactory/get) schema obj)))))
+        (JsonDecoder. schema obj)))))
 
 (def binary-decoder
   (fn [#^Schema schema obj]
     (decode-from schema obj
       (fn [#^Schema schema #^bytes obj]
-        (.binaryDecoder (DecoderFactory/get) obj nil)))))
+        (.createBinaryDecoder (DecoderFactory/defaultFactory) obj nil)))))
 
 ; 
 ; Avro schema generation

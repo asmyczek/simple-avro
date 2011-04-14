@@ -9,8 +9,7 @@
            (org.apache.avro.generic GenericDatumWriter
                                     GenericDatumReader)
            (java.io File)
-           (java.net URI URL)
-           (java.util NoSuchElementException)))
+           (java.net URI URL)))
 
 (defmulti #^{:private true}
   file class)
@@ -48,18 +47,19 @@
   (let [reader    (DataFileReader. (file f) (GenericDatumReader.))
         schema    (.getSchema reader)
         read-next (fn read-next [reader]
-                    (try
-                      (cons (unpack schema (.next reader)) (read-next reader))
-                      (catch Exception e nil)
-                      (finally
-                        (.close reader))))]
+                    (lazy-seq 
+                      (if (.hasNext reader)
+                        (cons (unpack schema (.next reader)) (read-next reader))
+                        (do
+                          (.close reader)
+                          nil))))]
     (read-next reader)))
 
 (defn read-meta
-  "Read meta from Avro data file."
-  [f]
+  "Read meta keys from Avro data file."
+  [f & keys]
   (let [reader (DataFileReader. (file f) (GenericDatumReader.))]
-    (loop [[k & ks] (.getMetaKeys reader) mta {}]
+    (loop [[k & ks] keys mta {}]
       (if (nil? k)
         mta
         (recur ks (assoc mta k (String. (.getMeta reader k) "UTF-8")))))))
