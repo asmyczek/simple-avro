@@ -48,11 +48,12 @@
   (let [reader    (DataFileReader. (file f) (GenericDatumReader.))
         schema    (.getSchema reader)
         read-next (fn read-next [reader]
-                    (try
-                      (cons (unpack schema (.next reader)) (read-next reader))
-                      (catch Exception e nil)
-                      (finally
-                        (.close reader))))]
+                    (lazy-seq 
+                      (if (.hasNext reader)
+                        (cons (unpack schema (.next reader)) (read-next reader))
+                        (do
+                          (.close reader)
+                          nil))))]
     (read-next reader)))
 
 (defn read-meta
