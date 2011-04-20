@@ -9,8 +9,7 @@
            (org.apache.avro.generic GenericDatumWriter
                                     GenericDatumReader)
            (java.io File)
-           (java.net URI URL)
-           (java.util NoSuchElementException)))
+           (java.net URI URL)))
 
 (defmulti #^{:private true}
   file class)
