@@ -45,12 +45,12 @@ Use equivalent decoder to de-serialize objects using _unpack_.
 ### Custom types API
 
 _simple-avro.core_ supports only basic Avro types. For custom types import _simple-avro.api_ instead of _core_.
-To implement a custom type first add a schema best matching the type. For example a Date object can be represented as:
+To add support for a custom type first add a schema best matching the type. For example a Date object can be represented as:
 
     (defavro-type avro-date
       :time avro-long)
 
-Second, register convert functions from object to Avro record and back using _pack-avro-instance_ and _unpack-avro-instance_:
+Second, register convert functions from the object type to Avro record and back using _pack-avro-instance_ and _unpack-avro-instance_:
 
     (pack-avro-instance Date
       (fn [date] 
@@ -60,7 +60,7 @@ Second, register convert functions from object to Avro record and back using _pa
       (fn [rec]
         (Date. (rec "time"))))
 
-You cen user default pack/unpack method to serialize the Date object now:
+You can user default pack/unpack method to serialize the Date object now:
 
     (unpack avro-date (pack avro-date (Date.)))
 
