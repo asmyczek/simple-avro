@@ -51,7 +51,7 @@
   (loop [n name rs [] upper true]
     (if (empty? n)
       (apply str rs)
-      (let [f (first n)]
+      (let [#^Character f (first n)]
         (cond
           (Character/isLetterOrDigit f)
             (recur (next n) (conj rs (if upper (Character/toUpperCase f) f)) false)

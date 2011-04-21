@@ -38,11 +38,14 @@
   "value" avro-int 
   "next"  (avro-union "List" avro-null))
 
-(def recursive 
+(def map-in-map 
   {"value" 1 
    "next"  {"value" 2
             "next"  {"value" 3
                      "next"  nil}}})
+
+(def maybe-date
+  (avro-maybe avro-date))
 
 (defmacro test-pack-unpack
   [name encoder decoder]
@@ -74,13 +77,16 @@
       (is (= (pu# "f1") 6))
       (is (= (pu# "f2") "test")))
 
-    (is (= (unpack List (pack List recursive ~encoder) ~decoder) recursive))
+    (is (= (unpack List (pack List map-in-map ~encoder) ~decoder) map-in-map))
 
     (let [now# (Date.)]
-      (is (= (unpack avro-date (pack avro-date now# ~encoder) ~decoder) now#)))
+      (is (= (unpack avro-date (pack avro-date now# ~encoder) ~decoder) now#))
+      (is (= (unpack maybe-date (pack maybe-date now# ~encoder) ~decoder) now#))
+      (is (= (unpack maybe-date (pack maybe-date nil ~encoder) ~decoder) nil)))
 
     ;(let [uuid# (UUID/randomUUID)]
       ;(is (= (unpack avro-uuid (pack avro-uuid uuid# ~encoder) ~decoder) uuid#)))
+
   ))
 
 (test-pack-unpack test-prim-types-pack-unpack-no-decoder nil nil)

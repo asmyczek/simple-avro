@@ -25,21 +25,22 @@
 
 ; Packing to Avro object
 
-(defprotocol AvroTypeable 
-  "Converts an object to AvroObject wrapper."
-  (pack-avro [this]))
+(defmulti pack-avro-method class)
 
-(extend-type nil
-  AvroTypeable
-    (pack-avro [_] nil))
+(defmethod pack-avro-method :default [obj] obj)
 
-(extend-type Object
-  AvroTypeable
-    (pack-avro [this] this))
+(def pack-avro pack-avro-method)
+
+(defmacro pack-avro-instance
+  [type f]
+  `(defmethod pack-avro-method ~type [o#]
+    (~f o#)))
 
 ; Unpacking from Avro object
 
 (defmulti unpack-avro-method (fn [o] (o "_custom_avro_type_")))
+
+(defmethod unpack-avro-method :default [obj] obj)
 
 (defmacro unpack-avro-instance
   [type f]
@@ -82,12 +83,10 @@
 (defavro-type avro-date
    :time avro-long)
 
-(extend-type Date
-  AvroTypeable
-    (pack-avro [#^Date this]
-      (avro-instance avro-date "time" (.getTime this))))
-
-(unpack-avro-instance avro-date #(Date. (% "time")))
+(pack-avro-instance Date
+  (fn [#^Date date] (avro-instance avro-date "time" (.getTime date))))
+  
+(unpack-avro-instance avro-date (fn [rec] (Date. (long (rec "time")))))
 
 ; UUID
 
@@ -101,15 +100,18 @@
 (defavro-type avro-uuid
    :uuid (avro-fixed "UUID" 16))
 
-(extend-type UUID
-  AvroTypeable
-    (pack-avro [#^UUID this]
-      (avro-instance avro-uuid "uuid"
-        (uuid-2-bytes this))))
+(pack-avro-instance UUID
+  (fn [#^UUID uuid] (avro-instance avro-uuid "uuid" (uuid-2-bytes uuid))))
 
 (unpack-avro-instance avro-uuid
   #(let [bb    (java.nio.ByteBuffer/wrap (% "uuid"))
          most  (.getLong bb)
          least (.getLong bb)]
      (UUID. most least)))
+
+; Maybe type abstraction for optional values
+
+(defmacro avro-maybe
+  [type]
+  `(avro-union ~type avro-null))
 

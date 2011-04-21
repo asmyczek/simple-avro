@@ -42,7 +42,30 @@ string names for type references, for example:
 _pack_ serializes objects into generic Avro objects. For json or binary serialization provide an optional _json-encoder_ or _binary-encoder_.
 Use equivalent decoder to de-serialize objects using _unpack_.
 
-For more details, see examples and unit tests.
+### Custom types API
+
+_simple-avro.core_ supports only basic Avro types. For custom types import _simple-avro.api_ instead of _core_.
+To implement a custom type first add a schema best matching the type. For example a Date object can be represented as:
+
+    (defavro-type avro-date
+      :time avro-long)
+
+Second, register convert functions from object to Avro record and back using _pack-avro-instance_ and _unpack-avro-instance_:
+
+    (pack-avro-instance Date
+      (fn [date] 
+        (avro-instance avro-date "time" (.getTime date))))
+      
+    (unpack-avro-instance avro-date
+      (fn [rec]
+        (Date. (rec "time"))))
+
+You cen user default pack/unpack method to serialize the Date object now:
+
+    (unpack avro-date (pack avro-date (Date.)))
+
+_simple-avro.api_ adds serialization support for Date, UUID and a _avro-maybe_ helper for optional values.
+For more details see examples and unit tests.
 
 ## Installation
 
@@ -57,6 +80,7 @@ For more details, see examples and unit tests.
       <artifactId>simple-avro</artifactId>
       <version>0.0.2</version>
     </dependency>
+
 
 Found a bug? Have a question? Drop me an email at adam.smyczek \_at\_ gmail.com.
 
