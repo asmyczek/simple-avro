@@ -1,7 +1,7 @@
 (ns simple-avro.core
   {:doc "Core namespace defines serialization/de-serialization functions."}
   (:require (clojure.contrib [json :as json]))
-  (:import (java.io FileOutputStream ByteArrayOutputStream)
+  (:import (java.io FileOutputStream ByteArrayOutputStream ByteArrayInputStream)
            (org.apache.avro Schema Schema$Type Schema$Field)
            (org.apache.avro.generic GenericData$EnumSymbol
                                     GenericData$Fixed
@@ -75,11 +75,16 @@
 
    Schema$Type/RECORD   (fn [#^Schema schema obj]
                           (if-let [ks (keys obj)]
+                            (try
                             (let [record (GenericData$Record. schema)]
                               (doseq [#^String k ks]
                                 (let [field (.getField schema k)]
+                                  (when (nil? field)
+                                    (throw (Exception. (str "Null field " k " schema " schema))))
                                   (.put record k (pack (.schema field) (obj k)))))
-                              record)))
+                              record)
+                              (catch Exception e
+                                (throw (Exception. (str ">>> " schema " - " obj) e))))))
 
     })
 
@@ -111,7 +116,7 @@
       (fn [#^Schema schema #^ByteArrayOutputStream stream]
         (JsonEncoder. schema stream))
       (fn [#^ByteArrayOutputStream stream]
-        (.. stream toString)))))
+        (.toString stream "UTF-8")))))
 
 (def binary-encoder
   (fn [#^Schema schema obj]
@@ -171,8 +176,7 @@
 
 (defn- decode-from
   [schema obj decoder]
-  (let [stream  (ByteArrayOutputStream.)
-        reader  (GenericDatumReader. schema)
+  (let [reader  (GenericDatumReader. schema)
         decoder (decoder schema obj)]
     (.read reader nil decoder)))
 
@@ -194,7 +198,8 @@
   (fn [#^Schema schema obj]
     (decode-from schema obj
       (fn [#^Schema schema #^String obj]
-        (JsonDecoder. schema obj)))))
+        (let [is (ByteArrayInputStream. (.getBytes obj "UTF-8"))]
+          (JsonDecoder. schema is))))))
 
 (def binary-decoder
   (fn [#^Schema schema obj]

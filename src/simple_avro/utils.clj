@@ -14,16 +14,16 @@
 (defmulti #^{:private true}
   file class)
 
-(defmethod file File [f]
+(defmethod file File [#^File f]
   f)
 
-(defmethod file String [f]
+(defmethod file String [#^String f]
   (File. f))
 
-(defmethod file URL [f]
+(defmethod file URL [#^URL f]
   (file (.getPath f)))
 
-(defmethod file URI [f]
+(defmethod file URI [#^URI f]
   (file (.toURL f)))
 
 (defn write-file

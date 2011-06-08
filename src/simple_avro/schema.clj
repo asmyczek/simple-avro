@@ -44,12 +44,28 @@
 
 ; Named types
 
+(defn- sanitize-name
+  "Basic string name sanitization.
+  The result is the name in camelcase notation."
+  [name]
+  (loop [n name rs [] upper true]
+    (if (empty? n)
+      (apply str rs)
+      (let [#^Character f (first n)]
+        (cond
+          (Character/isLetterOrDigit f)
+            (recur (next n) (conj rs (if upper (Character/toUpperCase f) f)) false)
+          (= f \_)
+            (recur (next n) (conj rs \_) true)
+          :else 
+            (recur (next n) rs true))))))
+
 (defn avro-record
   [name & decl]
   (let [schema        {:type "record"
-                       :name name}
+                       :name (sanitize-name name)}
         [schema decl] (if (map? (first decl))
-                        [(merge (first decl) schema) (next decl)]
+                        [(merge schema (first decl)) (next decl)]
                         [schema decl])]
     (assoc schema :fields
       (loop [d decl fields []]
@@ -66,9 +82,9 @@
 (defn avro-enum
   [name & decl]
   (let [schema        {:type "enum"
-                       :name name}
+                       :name (sanitize-name name)}
         [schema decl] (if (map? (first decl))
-                        [(merge (first decl) schema) (next decl)]
+                        [(merge schema (first decl)) (next decl)]
                         [schema decl])]
     (assoc schema :symbols (vec (clojure.core/map as-str decl)))))
 
@@ -76,7 +92,7 @@
   [name size & [opts]]
   (let [schema {:type "fixed"
                 :size size
-                :name name}]
+                :name (sanitize-name name)}]
     (if opts
       (merge opts schema)
       schema)))
