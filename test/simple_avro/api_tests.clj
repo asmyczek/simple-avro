@@ -84,8 +84,8 @@
       (is (= (unpack maybe-date (pack maybe-date now# ~encoder) ~decoder) now#))
       (is (= (unpack maybe-date (pack maybe-date nil ~encoder) ~decoder) nil)))
 
-    ;(let [uuid# (UUID/randomUUID)]
-      ;(is (= (unpack avro-uuid (pack avro-uuid uuid# ~encoder) ~decoder) uuid#)))
+    (let [uuid# (UUID/randomUUID)]
+      (is (= (unpack avro-uuid (pack avro-uuid uuid# ~encoder) ~decoder) uuid#)))
 
   ))
 

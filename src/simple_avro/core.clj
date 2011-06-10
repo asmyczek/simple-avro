@@ -107,7 +107,7 @@
       (fn [#^Schema schema #^ByteArrayOutputStream stream]
         (.jsonEncoder (EncoderFactory/get) schema stream))
       (fn [#^ByteArrayOutputStream stream]
-        (.. stream toString)))))
+        (.toString stream "UTF-8")))))
 
 (def binary-encoder
   (fn [#^Schema schema obj]
@@ -167,8 +167,7 @@
 
 (defn- decode-from
   [schema obj decoder]
-  (let [stream  (ByteArrayOutputStream.)
-        reader  (GenericDatumReader. schema)
+  (let [reader  (GenericDatumReader. schema)
         decoder (decoder schema obj)]
     (.read reader nil decoder)))
 
