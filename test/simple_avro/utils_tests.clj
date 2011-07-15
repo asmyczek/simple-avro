@@ -14,9 +14,9 @@
 
 (deftest read-write-test
   (let [file    (java.io.File/createTempFile "avro-test-data", ".tmp")
-        _       (write-file file Test test-records {"m1" "test1" "m2" "test2"})
-        content (read-file file)
-        meta    (read-meta file)]
+        _       (avro-spit file Test test-records {"m1" "test1" "m2" "test2"})
+        content (avro-slurp file)
+        meta    (avro-slurp-meta file)]
     (is (= content test-records))
     (is (= (meta "m1") "test1"))
     (is (= (meta "m2") "test2"))))

@@ -1,4 +1,4 @@
-(defproject simple-avro "0.0.3"
+(defproject simple-avro "0.0.4"
   :description "Clojure wrapper around Avro schema and serialization."
   :url          "http://github.com/asmyczek/simple-avro"
   :dependencies [[org.clojure/clojure "1.2.0"]
