@@ -1,5 +1,5 @@
 # simple-avro
-Clojure wrapper around Avro schema and serialization.
+Clojure wrapper for Avro schema and serialization.
 
 ## Quick Start
 
