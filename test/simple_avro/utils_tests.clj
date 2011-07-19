@@ -14,10 +14,20 @@
 
 (deftest read-write-test
   (let [file    (java.io.File/createTempFile "avro-test-data", ".tmp")
-        _       (write-file file Test test-records {"m1" "test1" "m2" "test2"})
-        content (read-file file)
-        meta    (read-meta file "m1" "m2")]
+        _       (avro-spit file Test test-records {"m1" "test1" "m2" "test2"})
+        content (avro-slurp file)
+        meta    (avro-slurp-meta file "m1" "m2")]
     (is (= content test-records))
     (is (= (meta "m1") "test1"))
     (is (= (meta "m2") "test2"))))
+
+
+(doto (avro-writer "/Users/asmyczek/temp/test.avro" avro-string)
+       (write "Just a test")
+			 (write "Second entry")
+			 (close))
+
+(let [r (avro-reader "/Users/asmyczek/temp/test.avro")]
+  (while (has-next r)
+    (println (read-next r))))
 
