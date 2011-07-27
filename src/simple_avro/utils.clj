@@ -6,7 +6,9 @@
            (org.apache.avro.file CodecFactory
                                  DataFileStream
                                  DataFileWriter
-                                 DataFileReader)
+                                 DataFileReader
+                                 SeekableInput
+                                 SeekableFileInput)
            (org.apache.avro.generic GenericDatumWriter
                                     GenericDatumReader)
            (java.io InputStream OutputStream File
@@ -36,13 +38,14 @@
 (defn avro-spit
   "Write to Avro data file."
   [f schema objs & [meta]]
-  (let [schema (avro-schema schema)
-        writer (DataFileWriter. (GenericDatumWriter. schema))]
+  (let [#^File   file   (file f)
+        #^Schema schema (avro-schema schema)
+                 writer (DataFileWriter. (GenericDatumWriter. schema))]
     (try
       (.setCodec writer (CodecFactory/deflateCodec 6))
       (doseq [[k v] meta]
         (.setMeta writer (str k) (str v)))
-      (.create writer schema (file f))
+      (.create writer schema file)
       (doseq [o objs]
         (.append writer (pack schema o)))
       (finally
@@ -51,9 +54,10 @@
 (defn avro-slurp
   "Read data from Avro data file."
   [f]
-  (let [reader    (DataFileReader. (file f) (GenericDatumReader.))
-        schema    (.getSchema reader)
-        read-next (fn read-next [reader]
+  (let [#^File           file   (file f)
+        #^DataFileReader reader (DataFileReader. file (GenericDatumReader.))
+        #^Schema         schema (.getSchema reader)
+        read-next (fn read-next [#^DataFileReader reader]
                     (lazy-seq 
                       (if (.hasNext reader)
                         (cons (unpack schema (.next reader)) (read-next reader))
@@ -65,7 +69,8 @@
 (defn avro-slurp-meta
   "Read meta from Avro data file."
   [f & keys]
-  (let [reader (DataFileReader. (file f) (GenericDatumReader.))]
+  (let [#^File file (file f)
+        reader (DataFileReader. file (GenericDatumReader.))]
     (loop [[k & ks] keys mta {}]
       (if (nil? k)
         mta
@@ -75,7 +80,7 @@
 ; Custom file handling
 ;
 
-; output stream
+; Output stream
 
 (defmulti #^{:private true}
   output-stream class)
@@ -107,10 +112,10 @@
 
 (defn avro-writer
   [os schema]
-  (let [schema (avro-schema schema)
-        os     (output-stream os) 
-        writer (doto (DataFileWriter. (GenericDatumWriter. schema))
-                 (.create schema os))]
+  (let [#^Schema       schema (avro-schema schema)
+        #^OutputStream os     (output-stream os) 
+                       writer (doto (DataFileWriter. (GenericDatumWriter. schema))
+                                (.create schema os))]
     (reify
       Writer
       (write [this obj]
@@ -123,36 +128,40 @@
 ; Input stream
 
 (defmulti #^{:private true}
-  input-stream class)
+  seekable-input class)
 
-(defmethod input-stream InputStream [#^OutputStream os]
-  os)
+(defmethod seekable-input SeekableInput [#^OutputStream si]
+  si)
 
-(defmethod input-stream File [#^File f]
-  (BufferedInputStream. (FileInputStream. f)))
+(defmethod seekable-input File [#^File f]
+  (SeekableFileInput. f))
 
-(defmethod input-stream String [#^String f]
-  (input-stream (File. f)))
+(defmethod seekable-input String [#^String f]
+  (seekable-input (File. f)))
 
-(defmethod input-stream URL [#^URL f]
-  (input-stream (.getPath f)))
+(defmethod seekable-input URL [#^URL f]
+  (seekable-input (.getPath f)))
 
-(defmethod input-stream URI [#^URI f]
-  (input-stream (.toURL f)))
+(defmethod seekable-input URI [#^URI f]
+  (seekable-input (.toURL f)))
 
 (defprotocol Reader
   "General reader protocol."
-  (read-next    [this] "Read next element.")
-  (has-next     [this] "Checks if more element exists."))
+  (read-next [this]     "Read next element.")
+  (has-next  [this]     "Checks if more element exists.")
+  (sync-pos  [this pos] "Sync reader position.")
+  (position  [this]     "Returns approximate position between 0.0 and 1.0."))
 
 (defn avro-reader
-  [is]
-  (let [is     (input-stream is)
-        dfs    (DataFileStream. is (GenericDatumReader.))
-        schema (.getSchema dfs)]
+  [si & [fields]]
+  (let [#^SeekableInput  si     (seekable-input si)
+        #^DataFileReader dfr    (DataFileReader. si (GenericDatumReader.))
+        #^Schema         schema (.getSchema dfr)]
     (reify
       Reader
-      (read-next [this] (unpack schema (.next dfs)))
-      (has-next  [this] (.hasNext dfs))
+      (read-next [this]     (unpack schema (.next dfr) nil fields))
+      (has-next  [this]     (.hasNext dfr))
+      (sync-pos  [this pos] (.sync dfr pos))
+      (position  [this]     (.tell si))
       Closable
-      (close     [this] (.close dfs)))))
+      (close     [this]     (.close dfr)))))
