@@ -40,7 +40,9 @@ string names for type references, for example:
     (assert (= contact (unpack Contact packed <optional decoder>)))
 
 _pack_ serializes objects into generic Avro objects. For json or binary serialization provide an optional _json-encoder_ or _binary-encoder_.
-Use equivalent decoder to de-serialize objects using _unpack_.
+Use equivalent decoder to de-serialize objects using _unpack_.  _unpack_ takes an optional list of fields to deserialize from a record.
+Use singe filed names or path vectors for nested records, for example _[:first [:address :city]]_ will deserialize only
+the two fields first and city. If no fields provided, the entire record is deserialized. 
 
 ### Custom types API
 
