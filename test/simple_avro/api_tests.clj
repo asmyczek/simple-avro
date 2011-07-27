@@ -92,4 +92,3 @@
 (test-pack-unpack test-prim-types-pack-unpack-no-decoder nil nil)
 (test-pack-unpack test-prim-types-pack-unpack-json json-encoder json-decoder)
 (test-pack-unpack test-prim-types-pack-unpack-binary binary-encoder binary-decoder)
-

@@ -2,8 +2,8 @@ pom.xml
 lib
 classes
 simple-avro-*.jar
-clojure*.jar
-.classpath
-.project
-.settings
 bin
+clojure*.jar
+.project
+.classpath
+.settings
