@@ -31,7 +31,8 @@
 
 (defavro-record MyNestedRecord
   "f1" avro-int
-  "f2" avro-string)
+  "f2" MyRecord
+  "f3" MyRecord)
 
 (defavro-record List
   "value" avro-int 
@@ -42,6 +43,12 @@
    "next"  {"value" 2
             "next"  {"value" 3
                      "next"  nil}}})
+
+(def nested-record {"f1" 10
+                    "f2" {"f1" 20
+                          "f2" "f2-f2"}
+                    "f3" {"f1" 20
+                          "f2" "f3-f2"}})
 
 (defmacro test-pack-unpack
   [name encoder decoder]
@@ -74,6 +81,12 @@
       (is (= (pu# "f2") "test")))
 
     (is (= (unpack List (pack List recursive ~encoder) ~decoder) recursive))
+    
+    (is (= (unpack MyNestedRecord (pack MyNestedRecord nested-record ~encoder) ~decoder) nested-record))
+    (is (= (unpack MyNestedRecord (pack MyNestedRecord nested-record ~encoder) ~decoder [:f1]) {"f1" 10}))
+    (is (= (unpack MyNestedRecord (pack MyNestedRecord nested-record ~encoder) ~decoder [:f1 :f2]) {"f1" 10 "f2" {"f1" 20 "f2" "f2-f2"}}))
+    (is (= (unpack MyNestedRecord (pack MyNestedRecord nested-record ~encoder) ~decoder [[:f3 :f2]]) {"f3" {"f2" "f3-f2"}}))
+    (is (= (unpack MyNestedRecord (pack MyNestedRecord nested-record ~encoder) ~decoder [:f1 [:f3 :f2]]) {"f1" 10 "f3" {"f2" "f3-f2"}}))
 
   ))
 
