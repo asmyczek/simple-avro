@@ -73,14 +73,14 @@ For more details see examples and unit tests.
 
 ### Leiningen
 
-    [simple-avro/simple-avro "0.0.4"]
+    [simple-avro/simple-avro "0.0.5"]
  
 ### Maven
 
     <dependency>
       <groupId>simple-avro</groupId>
       <artifactId>simple-avro</artifactId>
-      <version>0.0.4</version>
+      <version>0.0.5</version>
     </dependency>
 
 

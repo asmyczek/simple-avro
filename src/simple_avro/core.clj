@@ -9,12 +9,8 @@
                                     GenericData$Record
                                     GenericDatumWriter
                                     GenericDatumReader)
-           (org.apache.avro.io JsonEncoder
-                               BinaryEncoder
-                               JsonDecoder
-                               DecoderFactory)
+           (org.apache.avro.io DecoderFactory EncoderFactory)
            (org.apache.avro.util Utf8)))
-
 
 ;
 ; Encoding 
@@ -49,7 +45,7 @@
 
    Schema$Type/ENUM     (fn pack-enum [#^Schema schema obj] 
                           (if-let [enum (some #{obj} (.getEnumSymbols schema))]
-                            (GenericData$EnumSymbol. enum)
+                            (GenericData$EnumSymbol. schema enum)
                             (throw-with-log "Enum does not define '" obj "'.")))
 
    Schema$Type/UNION    (fn pack-union [#^Schema schema obj] 
@@ -114,7 +110,7 @@
   (fn json-encoder-fn [#^Schema schema obj]
     (encode-to schema obj
       (fn [#^Schema schema #^ByteArrayOutputStream stream]
-        (JsonEncoder. schema stream))
+        (.jsonEncoder (EncoderFactory/get) schema stream))
       (fn [#^ByteArrayOutputStream stream]
         (.toString stream "UTF-8")))))
 
@@ -122,7 +118,7 @@
   (fn binary-encoder-fn [#^Schema schema obj]
     (encode-to schema obj
       (fn [#^Schema schema #^ByteArrayOutputStream stream]
-        (BinaryEncoder. stream))
+        (.binaryEncoder (EncoderFactory/get) stream nil))
       (fn [#^ByteArrayOutputStream stream]
         (.. stream toByteArray)))))
 
@@ -235,13 +231,13 @@
     (decode-from schema obj
       (fn decode-from-json [#^Schema schema #^String obj]
         (let [is (ByteArrayInputStream. (.getBytes obj "UTF-8"))]
-          (JsonDecoder. schema is))))))
+          (.jsonDecoder (DecoderFactory/get) schema obj))))))
 
 (def binary-decoder
   (let [factory (DecoderFactory/defaultFactory)
         decode-from-binary (fn decode-from-binary
                              [#^Schema schema #^bytes obj]
-                             (.createBinaryDecoder factory obj nil))]
+                             (.binaryDecoder factory obj nil))]
     (fn binary-decoder-fn [#^Schema schema obj]
       (decode-from schema obj decode-from-binary))))
 
