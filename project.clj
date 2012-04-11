@@ -4,6 +4,7 @@
   :dependencies [[org.clojure/clojure "1.2.0"]
                  [org.clojure/clojure-contrib "1.2.0"]
                  [org.apache.avro/avro "1.5.1"]]
+  :dev-dependencies [[lein-eclipse "1.0.0"]]
   :disable-deps-clean false
   :warn-on-reflection true
   :source-path "src"
