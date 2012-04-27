@@ -45,10 +45,10 @@
                      "next"  nil}}})
 
 (def maybe-date
-  (avro-maybe avroDate))
+  (avro-maybe AvroDate))
 
 (defavro-record DateRecord
-  "date" avroDate)
+  "date" AvroDate)
 
 (defmacro test-pack-unpack
   [name encoder decoder]
@@ -83,7 +83,7 @@
     (is (= (unpack List (pack List map-in-map ~encoder) ~decoder) map-in-map))
 
     (let [now# (Date.)]
-      (is (= (unpack avroDate (pack avroDate now# ~encoder) ~decoder) now#))
+      (is (= (unpack AvroDate (pack AvroDate now# ~encoder) ~decoder) now#))
       (is (= (unpack maybe-date (pack maybe-date now# ~encoder) ~decoder) now#))
       (is (= (unpack maybe-date (pack maybe-date nil ~encoder) ~decoder) nil)))
 

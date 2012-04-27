@@ -13,14 +13,14 @@
 
 ; Date
 
-(defavro-record avroDate
+(defavro-record AvroDate
    :time avro-long)
 
 (extend-type Date
   AvroTypeable
     (avro-pack [date] {"time" (.getTime date)}))
 
-(def-unpack-avro avroDate (fn [rec] (Date. (long (rec "time")))))
+(def-unpack-avro AvroDate (fn [rec] (Date. (long (rec "time")))))
 
 ; UUID
 

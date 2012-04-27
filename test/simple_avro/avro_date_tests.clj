@@ -5,7 +5,7 @@
 (defavro-record Test
   "field1" avro-string
   "field2" avro-int
-  "field3" avroDate
+  "field3" AvroDate
   )
 
 (def test-records
