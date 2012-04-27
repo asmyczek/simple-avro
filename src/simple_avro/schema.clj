@@ -44,26 +44,10 @@
 
 ; Named types
 
-(defn- sanitize-name
-  "Basic string name sanitization.
-  The result is the name in camelcase notation."
-  [name]
-  (loop [n name rs [] upper true]
-    (if (empty? n)
-      (apply str rs)
-      (let [#^Character f (first n)]
-        (cond
-          (Character/isLetterOrDigit f)
-            (recur (next n) (conj rs (if upper (Character/toUpperCase f) f)) false)
-          (= f \_)
-            (recur (next n) (conj rs \_) true)
-          :else 
-            (recur (next n) rs true))))))
-
 (defn avro-record
   [name & decl]
   (let [schema        {:type "record"
-                       :name (sanitize-name name)}
+                       :name name}
         [schema decl] (if (map? (first decl))
                         [(merge schema (first decl)) (next decl)]
                         [schema decl])]
@@ -82,7 +66,7 @@
 (defn avro-enum
   [name & decl]
   (let [schema        {:type "enum"
-                       :name (sanitize-name name)}
+                       :name name}
         [schema decl] (if (map? (first decl))
                         [(merge schema (first decl)) (next decl)]
                         [schema decl])]
@@ -92,7 +76,7 @@
   [name size & [opts]]
   (let [schema {:type "fixed"
                 :size size
-                :name (sanitize-name name)}]
+                :name name}]
     (if opts
       (merge opts schema)
       schema)))

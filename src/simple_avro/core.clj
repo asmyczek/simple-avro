@@ -16,6 +16,20 @@
 ; Encoding 
 ;
 
+; Typabe protocol to convert custom types to Avro compatible format,
+; currenty only record supported (see api.clj).
+(defprotocol AvroTypeable
+  (avro-pack [this] "Pack custom type into avro."))
+
+; Default implementations
+(extend-type Object
+  AvroTypeable
+    (avro-pack [this] this))
+    
+(extend-type nil
+  AvroTypeable
+    (avro-pack [_] nil))
+
 (declare pack avro-schema)
 
 (defmacro throw-with-log
@@ -49,7 +63,7 @@
                             (throw-with-log "Enum does not define '" obj "'.")))
 
    Schema$Type/UNION    (fn pack-union [#^Schema schema obj] 
-                          (loop [schemas (.getTypes schema)]
+                          (loop [schemas (seq (.getTypes schema))]
                             (if (empty? schemas)
                               (throw-with-log "No union type defined for object '" obj "'.")
                               (let [rec (try
@@ -98,7 +112,8 @@
   (let [#^Schema schema (avro-schema schema)
                  type   (.getType schema)
                  encode (or encoder (fn [_ obj] obj))
-                 packer (*packers* type)]
+                 packer (*packers* type)
+                 obj    (avro-pack obj)]
     (if packer
       (try
         (encode schema (packer schema obj))
@@ -125,6 +140,11 @@
 ;
 ; Decoding
 ;
+
+; Unpack multi method
+(defmulti unpack-avro (fn [schema obj] (.getName schema)))
+
+(defmethod unpack-avro :default [schema obj] obj)
 
 (declare unpack-impl json-schema)
 
@@ -156,7 +176,7 @@
 
 (def #^{:private true}
   *unpackers*
-  {Schema$Type/NULL     (fn unpack-nil     [#^Schema schema obj] nil)
+  {Schema$Type/NULL     (fn unpack-nil     [#^Schema schema obj] (if obj (throw (Exception. "Nil expected."))))
    Schema$Type/BOOLEAN  (fn unpack-boolean [#^Schema schema obj] (boolean obj))
    Schema$Type/INT      (fn unpack-int     [#^Schema schema obj] (int obj))
    Schema$Type/LONG     (fn unpack-long    [#^Schema schema obj] (long obj))
@@ -209,9 +229,10 @@
     (let [type     (.getType schema)
           unpacker (*unpackers* type)]
       (if unpacker
-        (if (= type Schema$Type/RECORD)
-          (unpacker schema obj fields)
-          (unpacker schema obj))
+        (let [obj (if (= type Schema$Type/RECORD)
+                    (unpacker schema obj fields)
+                    (unpacker schema obj))]
+          (unpack-avro schema obj))
         (throw-with-log "No unpack defined for type '" type "'.")))))
 
 (defn unpack
@@ -240,6 +261,14 @@
                              (.binaryDecoder factory obj nil))]
     (fn binary-decoder-fn [#^Schema schema obj]
       (decode-from schema obj decode-from-binary))))
+
+;
+; Custom avro type methods
+;
+
+(defmacro def-unpack-avro
+  [type f]
+  `(defmethod unpack-avro ~(str type) [s# o#] (~f o#)))
 
 ; 
 ; Avro schema generation

@@ -2,12 +2,6 @@
   (:use (simple-avro schema core)
         (clojure test)))
 
-(deftest sanitize-name-types
-  (is (= (:name (avro-record "just a test")) "JustATest"))
-  (is (= (:name (avro-record "just-a-test")) "JustATest"))
-  (is (= (:name (avro-record "justATest")) "JustATest"))
-  (is (= (:name (avro-record "Just_A_Test")) "Just_A_Test")))
-
 (deftest test-prim-types
   (is (= avro-null    {:type "null"}))
   (is (= avro-boolean {:type "boolean"}))

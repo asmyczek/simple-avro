@@ -1,5 +1,5 @@
 (ns simple-avro.api-tests
-  (:use (simple-avro schema api)
+  (:use (simple-avro core schema api)
         (clojure test))
   (:import (java.util Date UUID)))
 
@@ -45,7 +45,10 @@
                      "next"  nil}}})
 
 (def maybe-date
-  (avro-maybe avro-date))
+  (avro-maybe avroDate))
+
+(defavro-record DateRecord
+  "date" avroDate)
 
 (defmacro test-pack-unpack
   [name encoder decoder]
@@ -80,14 +83,20 @@
     (is (= (unpack List (pack List map-in-map ~encoder) ~decoder) map-in-map))
 
     (let [now# (Date.)]
-      (is (= (unpack avro-date (pack avro-date now# ~encoder) ~decoder) now#))
+      (is (= (unpack avroDate (pack avroDate now# ~encoder) ~decoder) now#))
       (is (= (unpack maybe-date (pack maybe-date now# ~encoder) ~decoder) now#))
       (is (= (unpack maybe-date (pack maybe-date nil ~encoder) ~decoder) nil)))
 
+    (let [now-record# {"date" (Date.)}]
+      (is (= (unpack DateRecord (pack DateRecord now-record# ~encoder) ~decoder) now-record#)))
+    
     (let [uuid# (UUID/randomUUID)]
-      (is (= (unpack avro-uuid (pack avro-uuid uuid# ~encoder) ~decoder) uuid#)))
+      (is (= (unpack avroUUID (pack avroUUID uuid# ~encoder) ~decoder) uuid#)))
 
   ))
+
+(pack DateRecord {"date" (Date.)} json-encoder)
+
 
 (test-pack-unpack test-prim-types-pack-unpack-no-decoder nil nil)
 (test-pack-unpack test-prim-types-pack-unpack-json json-encoder json-decoder)
