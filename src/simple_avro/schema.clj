@@ -1,8 +1,8 @@
 (ns simple-avro.schema
   {:doc "Avro 1.5 schema specification.
         See http://avro.apache.org/docs/1.5.0/spec.html for details."}
-  (:use (clojure.contrib [string :only (as-str)]
-                         [json :only (json-str)])))
+;  (:use [clojure.core])
+  (:use (clojure.data [json :only (json-str)])))
 
 (defmacro avro-type
   "Standard type declaration."
@@ -55,7 +55,7 @@
       (loop [d decl fields []]
         (if (empty? d)
           fields
-          (let [[field d] [{:name (as-str (first d))
+          (let [[field d] [{:name (clojure.core/name (first d))
                             :type (first (next d))}
                            (drop 2 d)]
                 [field d] (if (map? (first d))
@@ -70,7 +70,7 @@
         [schema decl] (if (map? (first decl))
                         [(merge schema (first decl)) (next decl)]
                         [schema decl])]
-    (assoc schema :symbols (vec (clojure.core/map as-str decl)))))
+    (assoc schema :symbols (vec (clojure.core/map clojure.core/name decl)))))
 
 (defn avro-fixed
   [name size & [opts]]

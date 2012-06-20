@@ -22,12 +22,12 @@
     (is (= (meta "m2") "test2"))))
 
 
-(doto (avro-writer "/Users/asmyczek/temp/test.avro" avro-string)
+(doto (avro-writer "/tmp/test.avro" avro-string)
        (write "Just a test")
 			 (write "Second entry")
 			 (close))
 
-(let [r (avro-reader "/Users/asmyczek/temp/test.avro")]
+(let [r (avro-reader "/tmp/test.avro")]
   (while (has-next r)
     (println (read-next r))))
 

@@ -1,6 +1,6 @@
 (ns simple-avro.core
   {:doc "Core namespace defines serialization/de-serialization functions."}
-  (:require (clojure.contrib [json :as json]))
+  (:require (clojure.data [json :as json]))
   (:import (java.io FileOutputStream ByteArrayOutputStream ByteArrayInputStream)
            (org.apache.avro Schema Schema$Type Schema$Field)
            (org.apache.avro.generic GenericData$EnumSymbol
@@ -274,7 +274,7 @@
 ; Avro schema generation
 ;
 
-(def named-types nil)
+(def ^:dynamic named-types nil)
 
 (defn- traverse-schema
   "Traverse types of a schema."
