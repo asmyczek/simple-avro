@@ -1,7 +1,7 @@
 (ns simple-avro.utils
   {:doc "General utils."}
   (:use (simple-avro core))
-  (:require (clojure.contrib [json :as json]))
+  (:require (clojure.data [json :as json]))
   (:import (org.apache.avro Schema Schema$Type)
            (org.apache.avro.file CodecFactory
                                  DataFileStream
